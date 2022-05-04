@@ -1,0 +1,825 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: AIM Banking API
+  description: AIM Banking backend API service
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: "https://BACKEND_URL"
+    description: Apigee
+tags:
+  - name: users
+    description: Users
+  - name: authentication
+    description: Authentication
+  - name: accounts
+    description: Accounts
+  - name: atms
+    description: ATMs
+  - name: transactions
+    description: Transactions
+paths:
+  /users:
+    get:
+      summary: get all users
+      description: a secure route restricted to the Admin role that accepts GET requests and returns a list of all the users in the application.
+      operationId: listUsers
+      security:
+      - OAuth2: [read]
+      tags:
+        - users
+      responses:
+        200:
+          description: complete list of users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Users"
+        401:
+          $ref: "#/components/schemas/UnauthorizedError"
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: create a user
+      description: A secure route restricted to the Admin role that accepts POST requests containing new user details. On success the user is created and automatically verified.
+      operationId: createUser
+      security:
+      - OAuth2: [write]
+      tags:
+        - users
+      requestBody:
+        description: new user data
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        201:
+          description: created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        401:
+          $ref: "#/components/schemas/UnauthorizedError"
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /users/{userId}:
+    get:
+      summary: get a specific user
+      security:
+      - OAuth2: [read]
+      description: A secure route that accepts GET requests and returns the details of the user with the specified id. The Admin role can access any account, the User role can only access their own account.
+      operationId: getUserById
+      tags:
+        - users
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: user id
+          schema:
+            type: integer
+      responses:
+        200:
+          description: selected user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        401:
+          $ref: "#/components/schemas/UnauthorizedError"
+        404:
+          description: user not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: update a specific user
+      description: A secure route that accepts PUT requests to update the details of the user with the specified id. The Admin role can update any account including its role, the User role can only update there own account details except for role.
+      operationId: updateUser
+      tags:
+        - users
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: user id
+          schema:
+            type: integer
+      requestBody:
+        description: user data to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        200:
+          description: updated user data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserUpdate"
+        401:
+          $ref: "#/components/schemas/UnauthorizedError"
+        404:
+          description: user not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags:
+      - users
+      summary: delete user
+      description: A secure route that accepts DELETE requests to delete the user with the specified id. The Admin role can delete any account, the User role can only delete their own account.
+      operationId: deleteUser
+      parameters:
+      - name: userId
+        in: path
+        description: user id
+        schema:
+          type: integer
+        required: true
+      responses:
+        200:
+          description: user deleted
+        401:
+          $ref: "#/components/schemas/UnauthorizedError"
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    
+  /users/register:
+    post:
+      tags:
+      - users
+      summary: register user
+      description: A public route that accepts POST requests containing user details. On success the user is registered and a verification email is sent to the email address of the user, user must be verified before they can login.
+      operationId: registerUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        201:
+          description: user created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        400:
+          description: invalid details
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+                
+  /users/login:
+    post:
+      tags:
+      - authentication
+      summary: login user
+      description: A public route that accepts POST requests containing an email and password
+        in the body.
+      operationId: loginUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLogin"
+      responses:
+        200:
+          description: login successful
+        400:
+          description: invalid credentials
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+                
+  /users/forgot-password:
+    post:
+      tags:
+      - authentication
+      summary: forgot password
+      description: A public route that accepts POST requests containing user email address. 
+        On success a password reset email is sent to the email address of the user. 
+        The email contains a single use reset token that is valid for one day.
+      operationId: forgotPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        200:
+          description: successful operation
+        400:
+          description: invalid operation
+
+  /users/change-password:
+    post:
+      tags:
+      - authentication
+      summary: change password
+      description: A public route that accepts POST requests containing a reset token,
+        password and confirm password. On success the user password is reset.
+      operationId: changePassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - token
+              - password
+              - confirmPassword
+              properties:
+                token:
+                  type: string
+                password:
+                  type: string
+                  format: password
+                confirmPassword:
+                  type: string
+                  format: password
+      responses:
+        200:
+          description: successful operation
+        400:
+          description: invalid operation
+          
+  /otp/verify:
+    post:
+      tags:
+      - authentication
+      summary: verify otp
+      description: Public route that accepts POST request containing a one-time password
+      operationId: verifyOTP
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                otp:
+                  type: integer
+                  format: int32
+      responses:
+        200:
+          description: successful operation
+        400:
+          description: invalid
+
+  /users/{userId}/accounts:
+    get:
+      summary: get all accounts for a user
+      operationId: getAccountsForUser
+      tags:
+        - accounts
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: user id
+          schema:
+            type: integer
+      responses:
+        200:
+          description: list of accounts for user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Accounts"
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: create an account for a user
+      operationId: createAccountForUser
+      tags:
+        - accounts
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: user id
+          schema:
+            type: string
+      requestBody:
+        description: new account data
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Account'
+      responses:
+        '200':
+          description: created account for user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /users/{userId}/accounts/{accountName}:
+    get:
+      summary: get a specific account for a user
+      operationId: getAccountForUser
+      tags:
+        - accounts
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: user id
+          schema:
+            type: integer
+        - name: accountName
+          in: path
+          required: true
+          description: account name
+          schema:
+            type: string
+      responses:
+        200:
+          description: selected account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        404:
+          description: account not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /atms:
+    get:
+      summary: get all ATMs
+      operationId: getAtms
+      tags:
+        - atms
+      responses:
+        '200':
+          description: complete list of atms
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Atms"
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: create a new ATM
+      operationId: createAtm
+      tags:
+        - atms
+      requestBody:
+        description: new ATM data
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Atm'
+      responses:
+        '200':
+          description: ATM created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Atm"
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /atms/{name}:
+    get:
+      summary: get a specific ATM
+      operationId: getAtm
+      tags:
+        - atms
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: ATM name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: selected ATM
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Atm"
+        '404':
+          description: ATM not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: update a specific ATM
+      operationId: updateAtm
+      tags:
+        - atms
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: ATM name
+          schema:
+            type: string
+      requestBody:
+        description: ATM data to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtmUpdate'
+      responses:
+        '200':
+          description: updated ATM fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AtmUpdate"
+        '404':
+          description: ATM not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /transactions:
+    get:
+      summary: get all transactions
+      operationId: getTransactions
+      tags:
+        - transactions
+      responses:
+        '200':
+          description: complete list of transactions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Atms"
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: create a new transaction
+      operationId: createTransation
+      tags:
+        - transactions
+      requestBody:
+        description: new transaction data
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transaction'
+      responses:
+        '200':
+          description: transaction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /transactions/{id}:
+    get:
+      summary: get a specific transaction
+      operationId: getTransaction
+      tags:
+        - transactions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: transaction id
+          schema:
+            type: string
+      responses:
+        '200':
+          description: selected transaction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+        '404':
+          description: transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    User:
+      type: object
+      description: user
+      required:
+        - name
+        - email
+        - password
+        - mobileNumber
+      properties:
+        name:
+          description: name of user
+          type: string
+        email:
+          description: email address
+          type: string
+          format: email
+        password:
+          description: password
+          type: string
+          format: password
+        mobileNumber:
+          description: mobile number
+          type: string
+    Users:
+      type: array
+      description: array of user
+      items:
+        $ref: "#/components/schemas/User"
+
+    UserUpdate:
+      type: object
+      description: user update fields
+      properties:
+        name:
+          description: name of user
+          type: string
+        email:
+          description: email
+          type: string
+          format: email
+        mobileNumber:
+          description: mobile number
+          type: string
+    
+    UserLogin:
+      type: object
+      description: user credentials
+      required:
+      - email
+      - password
+      properties:
+        email:
+          description: email
+          type: string
+          format: email
+        password:
+          description: password
+          type: string
+          format: password
+
+    Account:
+      type: object
+      description: customer account
+      required:
+        - name
+      properties:
+        name:
+          description: account name
+          type: string
+        balance:
+          description: account balance
+          type: number
+          format: float
+        overdraftAllowed:
+          description: is overdraft allowed?
+          type: boolean
+
+    Accounts:
+      type: array
+      description: array of customer accounts
+      items:
+        $ref: "#/components/schemas/Account"
+
+    Atm:
+      type: object
+      description: ATM
+      required:
+        - name
+        - latitude
+        - longitude
+      properties:
+        name:
+          description: ATM name
+          type: string
+        description:
+          description: description of ATM
+          type: string
+        latitude:
+          description: latitude in decimal degrees
+          type: number
+          format: float
+          minimum: -90
+          maximum: 90
+        longitude:
+          description: longitude in decimal degrees
+          type: number
+          format: float
+          minimum: -180
+          maximum: 180
+
+    AtmUpdate:
+      type: object
+      description: ATM update fields
+      properties:
+        description:
+          description: description of ATM
+          type: string
+        latitude:
+          description: latitude in decimal degrees
+          type: number
+          format: float
+          minimum: -90
+          maximum: 90
+        longitude:
+          description: longitude in decimal degrees
+          type: number
+          format: float
+          minimum: -180
+          maximum: 180
+
+    Atms:
+      type: object
+      description: list of ATMs
+      additionalProperties:
+        $ref: "#/components/schemas/Atm"
+
+    Transaction:
+      type: object
+      description: transaction
+      required:
+        - customerEmail
+        - accountName
+        - transactionType
+        - amount
+      properties:
+        customerEmail:
+          description: customer email address
+          type: string
+        accountName:
+          description: customer account name
+          type: string
+        transactionType:
+          description: transaction type
+          schema: 
+          $ref: "#/components/schemas/TransactionType"
+        amount:
+          description: account balance
+          type: number
+          format: float
+        toCustomerEmail:
+          description: customer email address that receives transfer
+          type: string
+        toAccountName:
+          description: customer account name that receives transfer
+          type: string
+
+    Transactions:
+      type: object
+      description: list of transactions
+      additionalProperties:
+        $ref: "#/components/schemas/Transaction"
+
+    TransactionType:
+      type: string
+      enum:
+        - DEPOSIT
+        - WITHDRAWAL
+        - TRANSFER
+
+    Error:
+      type: object
+      description: error response
+      required:
+        - statusText
+        - messages
+      properties:
+        statusText:
+          type: string
+        messages:
+          type: array
+          items:
+            description: error message
+            type: string
+          minItems: 1
+    
+    UnauthorizedError:
+      description: access token is missing or invalid
+      
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://example.com/oauth/authorize
+          tokenUrl: https://example.com/oauth/token
+          scopes:
+            read: Grants read access
+            write: Grants write access
+            admin: Grants access to admin operations
