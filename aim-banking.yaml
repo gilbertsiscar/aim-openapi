@@ -1,4 +1,4 @@
-openapi: "3.0.0"
+openapi: 3.0.0
 info:
   version: 1.0.0
   title: AIM Banking API
@@ -7,7 +7,7 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: "https://BACKEND_URL"
+  - url: 'https://BACKEND_URL'
     description: Apigee
 tags:
   - name: users
@@ -27,7 +27,7 @@ paths:
       description: a secure route restricted to the Admin role that accepts GET requests and returns a list of all the users in the application.
       operationId: listUsers
       security:
-      - OAuth2: [read]
+        - BearerAuth: []
       tags:
         - users
       responses:
@@ -36,21 +36,21 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Users"
+                $ref: '#/components/schemas/Users'
         401:
-          $ref: "#/components/schemas/UnauthorizedError"
+          $ref: '#/components/schemas/UnauthorizedError'
         default:
           description: error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
     post:
       summary: create a user
       description: A secure route restricted to the Admin role that accepts POST requests containing new user details. On success the user is created and automatically verified.
       operationId: createUser
       security:
-      - OAuth2: [write]
+        - BearerAuth: []
       tags:
         - users
       requestBody:
@@ -66,23 +66,23 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                $ref: '#/components/schemas/User'
         401:
-          $ref: "#/components/schemas/UnauthorizedError"
+          $ref: '#/components/schemas/UnauthorizedError'
         default:
           description: error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
   /users/{userId}:
     get:
       summary: get a specific user
-      security:
-      - OAuth2: [read]
       description: A secure route that accepts GET requests and returns the details of the user with the specified id. The Admin role can access any account, the User role can only access their own account.
       operationId: getUserById
+      security:
+        - BearerAuth: []
       tags:
         - users
       parameters:
@@ -98,25 +98,27 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                $ref: '#/components/schemas/User'
         401:
-          $ref: "#/components/schemas/UnauthorizedError"
+          $ref: '#/components/schemas/UnauthorizedError'
         404:
           description: user not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
         default:
           description: error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
     put:
       summary: update a specific user
       description: A secure route that accepts PUT requests to update the details of the user with the specified id. The Admin role can update any account including its role, the User role can only update there own account details except for role.
       operationId: updateUser
+      security:
+        - BearerAuth: []
       tags:
         - users
       parameters:
@@ -139,65 +141,69 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserUpdate"
+                $ref: '#/components/schemas/UserUpdate'
         401:
-          $ref: "#/components/schemas/UnauthorizedError"
+          $ref: '#/components/schemas/UnauthorizedError'
         404:
           description: user not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
         default:
           description: error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
     delete:
       tags:
-      - users
+        - users
       summary: delete user
       description: A secure route that accepts DELETE requests to delete the user with the specified id. The Admin role can delete any account, the User role can only delete their own account.
       operationId: deleteUser
+      security:
+        - BearerAuth: []
       parameters:
-      - name: userId
-        in: path
-        description: user id
-        schema:
-          type: integer
-        required: true
+        - name: userId
+          in: path
+          description: user id
+          schema:
+            type: integer
+          required: true
       responses:
         200:
           description: user deleted
         401:
-          $ref: "#/components/schemas/UnauthorizedError"
+          $ref: '#/components/schemas/UnauthorizedError'
         default:
           description: error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-    
+                $ref: '#/components/schemas/Error'
+
   /users/register:
     post:
       tags:
-      - users
+        - users
       summary: register user
       description: A public route that accepts POST requests containing user details. On success the user is registered and a verification email is sent to the email address of the user, user must be verified before they can login.
       operationId: registerUser
+      security:
+        - ApiKeyAuth: []
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/User"
+              $ref: '#/components/schemas/User'
       responses:
         201:
           description: user created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                $ref: '#/components/schemas/User'
         400:
           description: invalid details
         default:
@@ -205,21 +211,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-                
+                $ref: '#/components/schemas/Error'
+
   /users/login:
     post:
       tags:
-      - authentication
+        - authentication
       summary: login user
-      description: A public route that accepts POST requests containing an email and password
+      description:
+        A public route that accepts POST requests containing an email and password
         in the body.
       operationId: loginUser
+      security:
+        - ApiKeyAuth: []
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UserLogin"
+              $ref: '#/components/schemas/UserLogin'
       responses:
         200:
           description: login successful
@@ -230,15 +239,16 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-                
+                $ref: '#/components/schemas/Error'
+
   /users/forgot-password:
     post:
       tags:
-      - authentication
+        - authentication
       summary: forgot password
-      description: A public route that accepts POST requests containing user email address. 
-        On success a password reset email is sent to the email address of the user. 
+      description:
+        A public route that accepts POST requests containing user email address.
+        On success a password reset email is sent to the email address of the user.
         The email contains a single use reset token that is valid for one day.
       operationId: forgotPassword
       requestBody:
@@ -247,7 +257,7 @@ paths:
             schema:
               type: object
               required:
-              - email
+                - email
               properties:
                 email:
                   type: string
@@ -261,9 +271,10 @@ paths:
   /users/change-password:
     post:
       tags:
-      - authentication
+        - authentication
       summary: change password
-      description: A public route that accepts POST requests containing a reset token,
+      description:
+        A public route that accepts POST requests containing a reset token,
         password and confirm password. On success the user password is reset.
       operationId: changePassword
       requestBody:
@@ -272,9 +283,9 @@ paths:
             schema:
               type: object
               required:
-              - token
-              - password
-              - confirmPassword
+                - token
+                - password
+                - confirmPassword
               properties:
                 token:
                   type: string
@@ -289,11 +300,11 @@ paths:
           description: successful operation
         400:
           description: invalid operation
-          
+
   /otp/verify:
     post:
       tags:
-      - authentication
+        - authentication
       summary: verify otp
       description: Public route that accepts POST request containing a one-time password
       operationId: verifyOTP
@@ -331,13 +342,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Accounts"
+                $ref: '#/components/schemas/Accounts'
         default:
           description: error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
     post:
       summary: create an account for a user
       operationId: createAccountForUser
@@ -363,13 +374,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Account"
+                $ref: '#/components/schemas/Account'
         default:
           description: error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
   /users/{userId}/accounts/{accountName}:
     get:
@@ -396,19 +407,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Account"
+                $ref: '#/components/schemas/Account'
         404:
           description: account not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
         default:
           description: error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
   /atms:
     get:
@@ -422,13 +433,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Atms"
+                $ref: '#/components/schemas/Atms'
         default:
           description: error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
     post:
       summary: create a new ATM
       operationId: createAtm
@@ -447,13 +458,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Atm"
+                $ref: '#/components/schemas/Atm'
         default:
           description: error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
   /atms/{name}:
     get:
@@ -474,19 +485,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Atm"
+                $ref: '#/components/schemas/Atm'
         '404':
           description: ATM not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
     put:
       summary: update a specific ATM
       operationId: updateAtm
@@ -512,19 +523,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AtmUpdate"
+                $ref: '#/components/schemas/AtmUpdate'
         '404':
           description: ATM not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
   /transactions:
     get:
@@ -538,13 +549,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Atms"
+                $ref: '#/components/schemas/Atms'
         default:
           description: error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
     post:
       summary: create a new transaction
       operationId: createTransation
@@ -563,13 +574,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Transaction"
+                $ref: '#/components/schemas/Transaction'
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
   /transactions/{id}:
     get:
@@ -590,19 +601,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Transaction"
+                $ref: '#/components/schemas/Transaction'
         '404':
           description: transaction not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
 components:
   schemas:
@@ -633,7 +644,7 @@ components:
       type: array
       description: array of user
       items:
-        $ref: "#/components/schemas/User"
+        $ref: '#/components/schemas/User'
 
     UserUpdate:
       type: object
@@ -649,13 +660,13 @@ components:
         mobileNumber:
           description: mobile number
           type: string
-    
+
     UserLogin:
       type: object
       description: user credentials
       required:
-      - email
-      - password
+        - email
+        - password
       properties:
         email:
           description: email
@@ -687,7 +698,7 @@ components:
       type: array
       description: array of customer accounts
       items:
-        $ref: "#/components/schemas/Account"
+        $ref: '#/components/schemas/Account'
 
     Atm:
       type: object
@@ -740,7 +751,7 @@ components:
       type: object
       description: list of ATMs
       additionalProperties:
-        $ref: "#/components/schemas/Atm"
+        $ref: '#/components/schemas/Atm'
 
     Transaction:
       type: object
@@ -759,8 +770,8 @@ components:
           type: string
         transactionType:
           description: transaction type
-          schema: 
-          $ref: "#/components/schemas/TransactionType"
+          schema:
+          $ref: '#/components/schemas/TransactionType'
         amount:
           description: account balance
           type: number
@@ -776,7 +787,7 @@ components:
       type: object
       description: list of transactions
       additionalProperties:
-        $ref: "#/components/schemas/Transaction"
+        $ref: '#/components/schemas/Transaction'
 
     TransactionType:
       type: string
@@ -800,10 +811,10 @@ components:
             description: error message
             type: string
           minItems: 1
-    
+
     UnauthorizedError:
       description: access token is missing or invalid
-      
+
   securitySchemes:
     BearerAuth:
       type: http
