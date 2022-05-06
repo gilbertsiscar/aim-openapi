@@ -7,9 +7,9 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: 'https://apigee_url'
+  - url: 'https://apigee_url/api/v1.0'
     description: Apigee
-  - url: 'https://mulesoft_url'
+  - url: 'https://mulesoft_url/api/v1.0'
     description: Mulesoft
 tags:
   - name: users
@@ -25,20 +25,50 @@ tags:
 paths:
   /users:
     get:
-      summary: get all users
+      summary: list users
       description: a secure route restricted to the Admin role that accepts GET requests and returns a list of all the users in the application.
       operationId: listUsers
       security:
         - BearerAuth: []
       tags:
         - users
+      parameters:
+        - name: page
+          in: query
+          description: request a specific page of the list results
+          schema:
+            type: string
+        - name: page_size
+          in: query
+          description: specify the maximum number of results to be returned by the server
+          schema:
+            type: integer
+            format: int32
+        - name: order_by
+          in: query
+          description: specify sorting order for list results
+          schema:
+            type: string
+        - name: filter
+          in: query
+          description: filter a collection of resource
+          schema:
+            type: string
       responses:
         200:
           description: complete list of users
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Users'
+                type: object
+                properties:
+                  users:
+                    $ref: '#/components/schemas/Users'
+                  total_size:
+                    type: integer
+                    format: int32
+                  next_page:
+                    type: string
         401:
           $ref: '#/components/schemas/UnauthorizedError'
         default:
