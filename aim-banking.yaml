@@ -7,8 +7,10 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: 'https://BACKEND_URL'
+  - url: 'https://apigee_url'
     description: Apigee
+  - url: 'https://mulesoft_url'
+    description: Mulesoft
 tags:
   - name: users
     description: Users
